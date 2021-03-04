@@ -4,7 +4,7 @@
     <form
       action=""
       class="search-bar__search-staco-via-tag"
-      @submit.prevent="searchStacoViaTag"
+      @submit.prevent="onSubmit"
     >
       <label for="tag">Tag: </label>
       <input type="text" id="tag" v-model="tag" placeholder="e.g. javascript" />
@@ -23,11 +23,8 @@ export default {
     }
   },
   methods: {
-    searchStacoViaTag() {
-      if (this.tag && this.tag !== '') {
-        console.log(`Tag ${this.tag} has been entered!`)
-        alert(`Tag ${this.tag} has been entered!`)
-      }
+    onSubmit() {
+      this.$emit('search-staco-via-tag', this.tag)
     },
   },
 }

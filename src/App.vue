@@ -1,7 +1,7 @@
 <template>
   <div id="id">
     Staco
-    <SearchBar />
+    <SearchBar @search-staco-via-tag="searchStacoViaTag" />
   </div>
 </template>
 
@@ -12,6 +12,14 @@ export default {
   name: 'App',
   components: {
     SearchBar,
+  },
+  methods: {
+    searchStacoViaTag(tag) {
+      if (tag && tag !== '') {
+        console.log(`Tag ${tag} has been entered!`)
+        alert(`Tag ${tag} has been entered!`)
+      }
+    },
   },
 }
 </script>
