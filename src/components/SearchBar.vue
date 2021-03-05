@@ -1,30 +1,36 @@
 <template>
   <div class="search-bar">
     Search Bar
-    <form
-      action=""
-      class="search-bar__search-staco-via-tag"
-      @submit.prevent="onSubmit"
-    >
+    <form class="search-bar__staco-search-form" @submit.prevent="onSubmit">
       <label for="tag">Tag: </label>
-      <input type="text" id="tag" v-model="tag" placeholder="e.g. javascript" />
+      <input type="text" id="tag" placeholder="e.g. javascript" />
       <button>Search!</button>
     </form>
-    {{ tag }}
+    {{ this.tag }}
   </div>
 </template>
 
 <script>
 export default {
   name: 'SearchBar',
-  data() {
-    return {
-      tag: '',
-    }
+  props: {
+    tag: {
+      type: String,
+      required: true,
+    },
   },
   methods: {
-    onSubmit() {
-      this.$emit('search-staco-via-tag', this.tag)
+    onSubmit(event) {
+      console.log(
+        `[*][DEV][SearchBar] onSubmit is triggered with tag: "${event.target.tag.value}".`
+      )
+      console.log(
+        `[*][DEV][SearchBar] "submit-search-bar" will be emitted with the tag: "${event.target.tag.value}"!`
+      )
+      this.$emit('submit-search-bar', event.target.tag.value)
+      console.log(
+        `[*][DEV][SearchBar] "submit-search-bar" has been emitted with the tag: "${event.target.tag.value}"!`
+      )
     },
   },
 }

@@ -1,24 +1,35 @@
 <template>
   <div id="id">
     Staco
-    <SearchBar @search-staco-via-tag="searchStacoViaTag" />
+    <SearchBar :tag="tag" @submit-search-bar="submit_SearchBar" />
+    <StacoSection :tag="tag" />
   </div>
 </template>
 
 <script>
 import SearchBar from './components/SearchBar.vue'
+import StacoSection from './components/StacoSection.vue'
 
 export default {
   name: 'App',
   components: {
     SearchBar,
+    StacoSection,
+  },
+  data() {
+    return {
+      tag: '',
+    }
   },
   methods: {
-    searchStacoViaTag(tag) {
-      if (tag && tag !== '') {
-        console.log(`Tag ${tag} has been entered!`)
-        alert(`Tag ${tag} has been entered!`)
-      }
+    submit_SearchBar(tag) {
+      console.log(
+        `[*][DEV][App] "submit-search-bar" is triggered with the tag: "${tag}".`
+      )
+      this.tag = tag
+      console.log(
+        `[*][DEV][App] Single source of truth, tag, has been updated to: "${tag}".`
+      )
     },
   },
 }
@@ -32,5 +43,9 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+.staco-item {
+  border: 1px solid #dfe3e8;
 }
 </style>
