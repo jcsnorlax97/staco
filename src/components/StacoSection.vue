@@ -2,7 +2,10 @@
   <div class="staco-section">
     Staco Section Container
     <StacoList :stacoItems="tenNewestStacoItems" />
-    <StacoList :stacoItems="tenNewestStacoItems" />
+    <!-- <StacoList :stacoItems="tenNewestquestions" /> -->
+    <!-- {{ buildRequestUrl_TenNewestQuestions }} -->
+    <!-- {{ buildRequestUrl_TenMostVotedQuestions }} -->
+    {{ tenNewestQuestionIds }}
   </div>
 </template>
 
@@ -10,6 +13,7 @@
 import axios from 'axios'
 import StacoList from './StacoList.vue'
 
+//TODO: Super ugly; Need refactoring later on.
 export default {
   name: 'StacoSection',
   components: { StacoList },
@@ -21,7 +25,8 @@ export default {
   },
   data() {
     return {
-      tenNewestStacoItems: [
+      tenNewestStacoItems: [],
+      tenNewestQuestions: [
         {
           tags: ['java', 'jpa', 'java-ee-8', 'jpa-jta'],
           owner: {
@@ -73,69 +78,269 @@ export default {
             'Mark &lt;Task&gt; (COMPLETE) on a Java SE todo list application',
         },
       ],
+      tenNewestQuestions_Comments: [],
+      tenNewestQuestions_Answers: [],
+      tenNewestQuestions_Answers_Comments: [],
       tenMostVotedStacoItems: [],
+      tenMostVotedQuestions: [],
+      tenMostVotedQuestions_Comments: [],
+      tenMostVotedQuestions_Answers: [],
+      tenMostVotedQuestions_Answers_Comments: [],
     }
+  },
+  computed: {
+    tenNewestQuestionIds: function() {
+      const questionIdArray = this.tenNewestQuestions.map(
+        (question) => question.question_id
+      )
+      const questionIdStr = questionIdArray.join(';')
+      console.log(
+        `[*][DEV][StacoSection] tenNewestQuestionIds are computed: ${questionIdStr}`
+      )
+      return questionIdStr
+    },
+    tenMostVotedQuestionIds: function() {
+      const questionIdArray = this.tenMostVotedQuestions.map(
+        (question) => question.question_id
+      )
+      const questionIdStr = questionIdArray.join(';')
+      console.log(
+        `[*][DEV][StacoSection] tenMostVotedQuestionIds are computed: ${questionIdStr}`
+      )
+      return questionIdStr
+    },
+    tenNewestQuestions_AnswerIds: function() {
+      const answerIdArray = this.tenNewestQuestions_Answers.map(
+        (answer) => answer.answer_id
+      )
+      const answerIdStr = answerIdArray.join(';')
+      console.log(`answerIdStr: ${answerIdStr}`)
+      return answerIdStr
+    },
   },
   watch: {
     tag(newTag, oldTag) {
       console.log(
         `[*][DEV][StacoSection] Prop (tag) has changed from "${oldTag}" to "${newTag}".`
       )
-      //   this.fetchTenNewestStacoItems()
-      //   this.fetchTenMostVotedStacoItems()
+      this.fetch_TenNewestStacoItems()
+      // this.fetch_TenMostVotedQuestions()
       console.log(
         `[*][DEV][StacoSection] Fetching methods via axios are called!`
       )
     },
   },
   methods: {
-    async fetchTenNewestStacoItems() {
-      if (this.tag && this.tag !== '') {
-        let domain = 'https://api.stackexchange.com'
-        let endpoint = '2.2/questions'
-        let queryString = `pagesize=10&order=desc&sort=creation&tagged=${this.tag}&site=stackoverflow`
-        let request = `${domain}/${endpoint}?${queryString}`
+    async fetch_TenNewestStacoItems() {
+      console.log('1')
+      const config = {
+        headers: {
+          Accept: 'application/json',
+        },
+      }
+      console.log('2')
+
+      // (A) fetch questions (need the question id for answers & comments)
+      await this.fetch_TenNewestQuestions(config)
+      if (this.tenNewestQuestions.length === 0) return
+      console.log(this.tenNewestQuestions)
+      console.log('3')
+
+      // (B) fetch questions' comments (based on question ids)
+      await this.fetch_TenNewestQuestions_Comments(config)
+      //   if (this.tenNewestQuestions_Comments === 0) return
+      console.log(`[4] ${this.tenNewestQuestions_Comments}`) // "body"
+
+      // (C) fetch answers (based on question ids)
+      await this.fetch_TenNewestQuestions_Answers(config)
+      //   if (this.tenNewestQuestions_Answers.length === 0) return
+      console.log(`[5] ${this.tenNewestQuestions_Answers}`) // comment_body
+
+      // (D) fetch answers' comments (based on answer ids)
+      await this.fetch_TenNewestQuestions_Answers_Comments(config)
+      //   if (this.tenNewestQuestions_Answers_Comments.length === 0) return
+      console.log(`[6] ${this.tenNewestQuestions_Answers_Comments}`)
+
+      // (E)
+      const stacoItems = this.generate_TenNewestStacos()
+      this.tenNewestStacoItems = stacoItems
+      console.log(stacoItems)
+      console.log(this.tenNewestStacoItems)
+    },
+
+    // --- fetch (Newest) ---
+    async fetch_TenNewestQuestions(config) {
+      console.log('2a')
+      const request = this.buildRequestUrl_TenNewestQuestions()
+      console.log('2b')
+      if (request && request !== '') {
+        console.log('2c')
+        const questions = await axios.get(request, config)
+        this.tenNewestQuestions = questions.data.items
+        return true
+      }
+      console.log('2e')
+      this.tenNewestQuestions = []
+      return false
+    },
+    async fetch_TenNewestQuestions_Comments(config) {
+      const request = this.buildRequestUrl_TenNewestQuestions_Comments()
+      if (request && request !== '') {
+        const comments = await axios.get(request, config)
+        this.tenNewestQuestions_Comments = comments.data.items
+        return true
+      }
+      this.tenNewestQuestions_Comments = []
+      return false
+    },
+    async fetch_TenNewestQuestions_Answers(config) {
+      const request = this.buildRequestUrl_TenNewestQuestions_Answers()
+      if (request && request !== '') {
+        const answers = await axios.get(request, config)
+        this.tenNewestQuestions_Answers = answers.data.items
+        return true
+      }
+      this.tenNewestQuestions_Answers = []
+      return false
+    },
+    async fetch_TenNewestQuestions_Answers_Comments(config) {
+      const request = this.buildRequestUrl_TenNewestQuestions_Answers_Comments()
+      if (request && request !== '') {
+        const comments = await axios.get(request, config)
+        this.tenNewestQuestions_Answers_Comments = comments.data.items
+        return true
+      }
+      this.tenNewestQuestions_Answers_Comments = []
+      return false
+    },
+    generate_TenNewestStacos() {
+      //   const tenNewestStacos = []
+      const stacoItems = this.tenNewestQuestions.map((question) => {
+        const questionComments = this.tenNewestQuestions_Comments.filter(
+          (comment) => comment.post_id === question.question_id
+        )
+        const questionAnswers = this.tenNewestQuestions_Answers.filter(
+          (answer) => answer.question_id === question.question_id
+        )
+
+        // for each answer, find all matching comments and then create a list of comments
+        const results_AnswerComments = questionAnswers.map((answer) => {
+          const questionAnswerComments = this.tenNewestQuestions_Answers_Comments.filter(
+            (comment) => comment.post_id === answer.answer_id
+          )
+          return questionAnswerComments.map((comment) => {
+            return {
+              answer_id: answer.answer_id,
+              comment_id: comment.comment_id,
+              answer_body: answer.body,
+              comment_body: comment.body,
+            }
+          })
+        })
+
+        // for each question, combine question info, question comments, answer info, and answer comments into one object.
+        return {
+          question_id: question.question_id,
+          question_title: question.title,
+          question_creation_date: question.creation_date,
+          question_votes: question.score,
+          question_body: question.body,
+          question_comments: questionComments,
+          answers: results_AnswerComments,
+        }
+      })
+
+      return stacoItems
+    },
+
+    // --- fetch (MostVoted) ---
+    async fetch_TenMostVotedQuestions() {
+      const request = this.buildRequestUrl_TenMostVotedQuestions()
+      if (request && request !== '') {
         let config = {
           headers: {
             Accept: 'application/json',
           },
         }
-        const stacoItems = await axios.get(request, config)
+        const questions = await axios.get(request, config)
+        // axios.all([axios.get(firstUrl), axios.get(secondUrl)])
+        console.log(questions)
+
         console.log(
-          `[*][DEV][StacoSection] ${stacoItems.data.items.length} newest stacoItems have been fetched!`
+          `[*][DEV][StacoSection] ${questions.data.items.length} most voted questions during the past week have been fetched!`
         )
-        this.tenNewestStacoItems = stacoItems.data.items
+        this.tenMostVotedQuestions = questions.data.items
         console.log(
-          `[*][DEV][StacoSection] These stacoItems have been stored into data()!`
+          `[*][DEV][StacoSection] These questions have been stored into data()!`
         )
       }
-      return []
+      this.tenNewestQuestions = []
     },
-    async fetchTenMostVotedStacoItems() {
+
+    buildRequestUrl_TenNewestQuestions() {
       if (this.tag && this.tag !== '') {
-        const toDate = this.getToTime()
-        const fromDate = this.getFromTime(toDate)
+        const domain = 'https://api.stackexchange.com'
+        const endpoint = '2.2/questions'
+        const queryString = `pagesize=10&order=desc&sort=creation&tagged=${this.tag}&site=stackoverflow&filter=withbody`
+        const request = `${domain}/${endpoint}?${queryString}`
+        console.log(request)
+        return request
+      }
+      return ''
+    },
+    buildRequestUrl_TenNewestQuestions_Comments() {
+      const questionIds = this.tenNewestQuestionIds
+      if (questionIds && questionIds !== '') {
+        const domain = 'https://api.stackexchange.com'
+        const endpoint = `2.2/questions/${questionIds}/comments`
+        const queryString =
+          'order=desc&sort=creation&site=stackoverflow&filter=withbody'
+        const request = `${domain}/${endpoint}?${queryString}`
+        return request
+      }
+      return ''
+    },
+    buildRequestUrl_TenNewestQuestions_Answers() {
+      const questionIds = this.tenNewestQuestionIds
+      if (questionIds && questionIds !== '') {
+        const domain = 'https://api.stackexchange.com'
+        const endpoint = `2.2/answers/${questionIds}`
+        const queryString =
+          'order=desc&sort=activity&site=stackoverflow&filter=withbody'
+        const request = `${domain}/${endpoint}?${queryString}`
+        return request
+      }
+      return ''
+    },
+    buildRequestUrl_TenNewestQuestions_Answers_Comments() {
+      const answerIds = this.tenNewestQuestions_AnswerIds
+      if (answerIds && answerIds !== '') {
+        const domain = 'https://api.stackexchange.com'
+        const endpoint = `2.2/answers/${answerIds}/comments`
+        const queryString =
+          'order=desc&sort=creation&site=stackoverflow&filter=withbody'
+        const request = `${domain}/${endpoint}?${queryString}`
+        return request
+      }
+      return ''
+    },
+    buildRequestUrl_TenMostVotedQuestions() {
+      if (this.tag && this.tag !== '') {
+        const toDate = this.getToDate()
+        const fromDate = this.getFromDate(toDate)
         console.log(
           `[*][DEV][StacoSection] fromDate: ${fromDate} | toDate: ${toDate}`
         )
-        let domain = 'https://api.stackexchange.com'
-        let endpoint = '2.2/questions'
-        let queryString = `pagesize=10&fromdate=${fromDate}&todate=${toDate}&order=desc&sort=votes&tagged=${this.tag}&site=stackoverflow`
-        let request = `${domain}/${endpoint}?${queryString}`
-        let config = {
-          headers: {
-            Accept: 'application/json',
-          },
-        }
-        const stacoItems = await axios.get(request, config)
+        const domain = 'https://api.stackexchange.com'
+        const endpoint = '2.2/questions'
+        const queryString = `pagesize=10&fromdate=${fromDate}&todate=${toDate}&order=desc&sort=votes&tagged=${this.tag}&site=stackoverflow&filter=withbody`
+        const request = `${domain}/${endpoint}?${queryString}`
         console.log(
-          `[*][DEV][StacoSection] ${stacoItems.data.items.length} most voted stacoItems during the past week have been fetched!`
+          `[*][DEV][StacoSection] request url for the ten newest questions are computed: ${request}`
         )
-        this.tenMostVotedStacoItems = stacoItems.data.items
-        console.log(
-          `[*][DEV][StacoSection] These stacoItems have been stored into data()!`
-        )
+        return request
       }
+      return ''
     },
     getToDate() {
       const toDate = Math.round(Date.now() / 1000)
