@@ -12,6 +12,8 @@
 <script>
 import axios from "axios";
 import StacoList from "./StacoList.vue";
+import { RepositoryFactory } from "../service/RepositoryFactory";
+const QuestionsRepository = RepositoryFactory.get("questions");
 
 //TODO: Super ugly; Need refactoring later on.
 export default {
@@ -141,8 +143,7 @@ export default {
       console.log("2");
 
       // (A) fetch questions (need the question id for answers & comments)
-      await this.fetch_TenNewestQuestions(config);
-      if (this.tenNewestQuestions.length === 0) return;
+      await this.fetch_TenNewestQuestions();
       console.log(this.tenNewestQuestions);
       console.log("3");
 
@@ -169,19 +170,22 @@ export default {
     },
 
     // --- fetch (Newest) ---
-    async fetch_TenNewestQuestions(config) {
+    async fetch_TenNewestQuestions() {
       console.log("2a");
-      const request = this.buildRequestUrl_TenNewestQuestions();
+      // const request = this.buildRequestUrl_TenNewestQuestions();
+      const params = {
+        pagesize: 10,
+        order: "desc",
+        sort: "creation",
+        tagged: `${this.tag}`,
+        site: "stackoverflow",
+        filter: "withbody"
+      };
+      const { data } = await QuestionsRepository.get(params);
       console.log("2b");
-      if (request && request !== "") {
-        console.log("2c");
-        const questions = await axios.get(request, config);
-        this.tenNewestQuestions = questions.data.items;
-        return true;
-      }
-      console.log("2e");
-      this.tenNewestQuestions = [];
-      return false;
+      console.log(data.items);
+      this.tenNewestQuestions = data.items ?? [];
+      console.log("2c");
     },
     async fetch_TenNewestQuestions_Comments(config) {
       const request = this.buildRequestUrl_TenNewestQuestions_Comments();
