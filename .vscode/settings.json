@@ -1,0 +1,9 @@
+{
+  // see https://stackoverflow.com/a/52259752 for details about why these two lines are necessary
+  "editor.formatOnSave": false,
+  "javascript.format.enable": false,
+  "eslint.validate": ["javascript", "html", "vue"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+}

@@ -27,14 +27,14 @@
 
 <script>
 export default {
-  name: 'StacoItem',
+  name: "StacoItem",
   props: {
     staco: {
       type: Object,
-      required: true,
-    },
-  },
-}
+      required: true
+    }
+  }
+};
 </script>
 
 <style>

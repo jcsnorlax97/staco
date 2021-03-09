@@ -12,26 +12,26 @@
 
 <script>
 export default {
-  name: 'SearchBar',
+  name: "SearchBar",
   props: {
     tag: {
       type: String,
-      required: true,
-    },
+      required: true
+    }
   },
   methods: {
     onSubmit(event) {
       console.log(
         `[*][DEV][SearchBar] onSubmit is triggered with tag: "${event.target.tag.value}".`
-      )
+      );
       console.log(
         `[*][DEV][SearchBar] "submit-search-bar" will be emitted with the tag: "${event.target.tag.value}"!`
-      )
-      this.$emit('submit-search-bar', event.target.tag.value)
+      );
+      this.$emit("submit-search-bar", event.target.tag.value);
       console.log(
         `[*][DEV][SearchBar] "submit-search-bar" has been emitted with the tag: "${event.target.tag.value}"!`
-      )
-    },
-  },
-}
+      );
+    }
+  }
+};
 </script>

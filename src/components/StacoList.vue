@@ -12,16 +12,16 @@
 </template>
 
 <script>
-import StacoItem from './StacoItem.vue'
+import StacoItem from "./StacoItem.vue";
 
 export default {
-  name: 'StacoList',
+  name: "StacoList",
   components: { StacoItem },
   props: {
     stacoItems: {
       type: Array,
-      required: true,
-    },
-  },
-}
+      required: true
+    }
+  }
+};
 </script>

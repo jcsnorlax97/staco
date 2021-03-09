@@ -7,32 +7,32 @@
 </template>
 
 <script>
-import SearchBar from './components/SearchBar.vue'
-import StacoSection from './components/StacoSection.vue'
+import SearchBar from "./components/SearchBar.vue";
+import StacoSection from "./components/StacoSection.vue";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
     SearchBar,
-    StacoSection,
+    StacoSection
   },
   data() {
     return {
-      tag: '',
-    }
+      tag: ""
+    };
   },
   methods: {
     submit_SearchBar(tag) {
       console.log(
         `[*][DEV][App] "submit-search-bar" is triggered with the tag: "${tag}".`
-      )
-      this.tag = tag
+      );
+      this.tag = tag;
       console.log(
         `[*][DEV][App] Single source of truth, tag, has been updated to: "${tag}".`
-      )
-    },
-  },
-}
+      );
+    }
+  }
+};
 </script>
 
 <style>
