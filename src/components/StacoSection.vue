@@ -14,6 +14,7 @@ import axios from "axios";
 import StacoList from "./StacoList.vue";
 import { RepositoryFactory } from "../service/RepositoryFactory";
 const QuestionsRepository = RepositoryFactory.get("questions");
+const AnswersRepository = RepositoryFactory.get("answers");
 
 //TODO: Super ugly; Need refactoring later on.
 export default {
@@ -135,12 +136,6 @@ export default {
   methods: {
     async fetch_TenNewestStacoItems() {
       console.log("1");
-      const config = {
-        headers: {
-          Accept: "application/json"
-        }
-      };
-      console.log("2");
 
       // (A) fetch questions (need the question id for answers & comments)
       const questions = await this.fetch_TenNewestQuestions();
@@ -157,14 +152,17 @@ export default {
       console.log(`[4] ${commentsForAllQuestions}`); // "body"
 
       // (C) fetch answers (based on question ids)
-      await this.fetch_TenNewestQuestions_Answers(config);
+      const answers = await this.fetch_TenNewestQuestions_Answers(questionIds);
       //   if (this.tenNewestQuestions_Answers.length === 0) return
-      console.log(`[5] ${this.tenNewestQuestions_Answers}`); // comment_body
+      console.log(`[5] ${answers}`); // comment_body
 
       // (D) fetch answers' comments (based on answer ids)
-      await this.fetch_TenNewestQuestions_Answers_Comments(config);
+      const answerIds = this.get_answer_ids(answers);
+      const commentsForAllAnswers = await this.fetch_TenNewestQuestions_Answers_Comments(
+        answerIds
+      );
       //   if (this.tenNewestQuestions_Answers_Comments.length === 0) return
-      console.log(`[6] ${this.tenNewestQuestions_Answers_Comments}`);
+      console.log(`[6] ${commentsForAllAnswers}`);
 
       // (E)
       const stacoItems = this.generate_TenNewestStacos();
@@ -219,25 +217,31 @@ export default {
       const answerIdStr = answerIdArray.join(";");
       return answerIdStr;
     },
-    async fetch_TenNewestQuestions_Answers(config) {
-      const request = this.buildRequestUrl_TenNewestQuestions_Answers();
-      if (request && request !== "") {
-        const answers = await axios.get(request, config);
-        this.tenNewestQuestions_Answers = answers.data.items;
-        return true;
-      }
-      this.tenNewestQuestions_Answers = [];
-      return false;
+    async fetch_TenNewestQuestions_Answers(questionIds) {
+      const params = {
+        order: "desc",
+        sort: "activity",
+        site: "stackoverflow",
+        filter: "withbody"
+      };
+      const { data } = await AnswersRepository.get(questionIds, params);
+      console.log("answers");
+      const answers = data.items ?? [];
+      console.log(answers);
+      return answers;
     },
-    async fetch_TenNewestQuestions_Answers_Comments(config) {
-      const request = this.buildRequestUrl_TenNewestQuestions_Answers_Comments();
-      if (request && request !== "") {
-        const comments = await axios.get(request, config);
-        this.tenNewestQuestions_Answers_Comments = comments.data.items;
-        return true;
-      }
-      this.tenNewestQuestions_Answers_Comments = [];
-      return false;
+    async fetch_TenNewestQuestions_Answers_Comments(answerIds) {
+      const params = {
+        order: "desc",
+        sort: "activity",
+        site: "stackoverflow",
+        filter: "withbody"
+      };
+      const { data } = await AnswersRepository.get_comments(answerIds, params);
+      console.log("answer comments");
+      const comments = data.items ?? [];
+      console.log(comments);
+      return comments;
     },
     generate_TenNewestStacos() {
       //   const tenNewestStacos = []
