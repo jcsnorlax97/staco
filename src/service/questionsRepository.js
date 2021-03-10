@@ -8,5 +8,12 @@ export default {
   // see axios docs (https://github.com/axios/axios#request-config) for more details
   get(params) {
     return Repository.get(`${resource}`, { params });
+  },
+
+  // get question comments
+  get_comments(questionIds, params) {
+    console.log(questionIds);
+    console.log(params);
+    return Repository.get(`${resource}/${questionIds}/comments`, { params });
   }
 };

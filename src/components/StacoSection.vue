@@ -143,14 +143,18 @@ export default {
       console.log("2");
 
       // (A) fetch questions (need the question id for answers & comments)
-      await this.fetch_TenNewestQuestions();
-      console.log(this.tenNewestQuestions);
+      const questions = await this.fetch_TenNewestQuestions();
+      console.log(questions);
       console.log("3");
 
+      const questionIds = this.get_question_ids(questions);
+
       // (B) fetch questions' comments (based on question ids)
-      await this.fetch_TenNewestQuestions_Comments(config);
+      const commentsForAllQuestions = await this.fetch_TenNewestQuestions_Comments(
+        questionIds
+      );
       //   if (this.tenNewestQuestions_Comments === 0) return
-      console.log(`[4] ${this.tenNewestQuestions_Comments}`); // "body"
+      console.log(`[4] ${commentsForAllQuestions}`); // "body"
 
       // (C) fetch answers (based on question ids)
       await this.fetch_TenNewestQuestions_Answers(config);
@@ -172,7 +176,6 @@ export default {
     // --- fetch (Newest) ---
     async fetch_TenNewestQuestions() {
       console.log("2a");
-      // const request = this.buildRequestUrl_TenNewestQuestions();
       const params = {
         pagesize: 10,
         order: "desc",
@@ -184,18 +187,37 @@ export default {
       const { data } = await QuestionsRepository.get(params);
       console.log("2b");
       console.log(data.items);
-      this.tenNewestQuestions = data.items ?? [];
+      const questions = data.items ?? [];
       console.log("2c");
+      return questions;
     },
-    async fetch_TenNewestQuestions_Comments(config) {
-      const request = this.buildRequestUrl_TenNewestQuestions_Comments();
-      if (request && request !== "") {
-        const comments = await axios.get(request, config);
-        this.tenNewestQuestions_Comments = comments.data.items;
-        return true;
-      }
-      this.tenNewestQuestions_Comments = [];
-      return false;
+    async fetch_TenNewestQuestions_Comments(questionIds) {
+      const params = {
+        order: "desc",
+        sort: "creation",
+        site: "stackoverflow",
+        filter: "withbody"
+      };
+
+      const { data } = await QuestionsRepository.get_comments(
+        questionIds,
+        params
+      );
+      console.log("question comments");
+      console.log(data.items);
+      const comments = data.items ?? [];
+      console.log(comments);
+      return comments;
+    },
+    get_question_ids(questions) {
+      const questionIdArray = questions.map(question => question.question_id);
+      const questionIdStr = questionIdArray.join(";");
+      return questionIdStr;
+    },
+    get_answer_ids(answers) {
+      const answerIdArray = answers.map(answer => answer.answer_id);
+      const answerIdStr = answerIdArray.join(";");
+      return answerIdStr;
     },
     async fetch_TenNewestQuestions_Answers(config) {
       const request = this.buildRequestUrl_TenNewestQuestions_Answers();
