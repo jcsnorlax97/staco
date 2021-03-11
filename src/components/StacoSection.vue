@@ -2,15 +2,12 @@
   <div class="staco-section">
     Staco Section Container
     <StacoList :stacoItems="tenNewestStacoItems" />
-    <!-- <StacoList :stacoItems="tenNewestquestions" /> -->
-    <!-- {{ buildRequestUrl_TenNewestQuestions }} -->
-    <!-- {{ buildRequestUrl_TenMostVotedQuestions }} -->
+    <StacoList :stacoItems="tenMostVotedStacoItems" />
     {{ tenNewestQuestionIds }}
   </div>
 </template>
 
 <script>
-import axios from "axios";
 import StacoList from "./StacoList.vue";
 import { ConstantsFactory } from "../constants/ConstantsFactory";
 import { RepositoryFactory } from "../service/RepositoryFactory";
@@ -18,7 +15,6 @@ const ApiParamsConstants = ConstantsFactory.get("apiParams");
 const QuestionsRepository = RepositoryFactory.get("questions");
 const AnswersRepository = RepositoryFactory.get("answers");
 
-//TODO: Super ugly; Need refactoring later on.
 export default {
   name: "StacoSection",
   components: { StacoList },
@@ -31,96 +27,13 @@ export default {
   data() {
     return {
       tenNewestStacoItems: [],
-      tenNewestQuestions: [
-        {
-          tags: ["java", "jpa", "java-ee-8", "jpa-jta"],
-          owner: {
-            reputation: 8214,
-            user_id: 3018377,
-            user_type: "registered",
-            accept_rate: 64,
-            profile_image: "https://i.stack.imgur.com/LlpBb.jpg?s=128&g=1",
-            display_name: "Loc",
-            link: "https://stackoverflow.com/users/3018377/loc"
-          },
-          is_answered: false,
-          view_count: 8,
-          answer_count: 0,
-          score: 0,
-          last_activity_date: 1614883151,
-          creation_date: 1614875666,
-          last_edit_date: 1614883151,
-          question_id: 66479210,
-          content_license: "CC BY-SA 4.0",
-          link:
-            "https://stackoverflow.com/questions/66479210/how-to-execute-jpa-named-native-update-query-in-batch-with-jta-usertransaction",
-          title:
-            "How to execute JPA Named Native Update Query In Batch with JTA UserTransaction?"
-        },
-        {
-          tags: ["java", "boolean"],
-          owner: {
-            reputation: 1,
-            user_id: 15326228,
-            user_type: "registered",
-            profile_image:
-              "https://www.gravatar.com/avatar/4b8be091d46c21eb649fd548061e5363?s=128&d=identicon&r=PG&f=1",
-            display_name: "beepingdirect",
-            link: "https://stackoverflow.com/users/15326228/beepingdirect"
-          },
-          is_answered: false,
-          view_count: 9,
-          answer_count: 1,
-          score: 0,
-          last_activity_date: 1614883096,
-          creation_date: 1614879932,
-          last_edit_date: 1614882630,
-          question_id: 66480342,
-          content_license: "CC BY-SA 4.0",
-          link:
-            "https://stackoverflow.com/questions/66480342/mark-task-complete-on-a-java-se-todo-list-application",
-          title:
-            "Mark &lt;Task&gt; (COMPLETE) on a Java SE todo list application"
-        }
-      ],
-      tenNewestQuestions_Comments: [],
-      tenNewestQuestions_Answers: [],
-      tenNewestQuestions_Answers_Comments: [],
-      tenMostVotedStacoItems: [],
-      tenMostVotedQuestions: [],
-      tenMostVotedQuestions_Comments: [],
-      tenMostVotedQuestions_Answers: [],
-      tenMostVotedQuestions_Answers_Comments: []
+      tenMostVotedStacoItems: []
     };
   },
-  computed: {
-    tenNewestQuestionIds: function() {
-      const questionIdArray = this.tenNewestQuestions.map(
-        question => question.question_id
-      );
-      const questionIdStr = questionIdArray.join(";");
-      console.log(
-        `[*][DEV][StacoSection] tenNewestQuestionIds are computed: ${questionIdStr}`
-      );
-      return questionIdStr;
-    },
-    tenMostVotedQuestionIds: function() {
-      const questionIdArray = this.tenMostVotedQuestions.map(
-        question => question.question_id
-      );
-      const questionIdStr = questionIdArray.join(";");
-      console.log(
-        `[*][DEV][StacoSection] tenMostVotedQuestionIds are computed: ${questionIdStr}`
-      );
-      return questionIdStr;
-    },
-    tenNewestQuestions_AnswerIds: function() {
-      const answerIdArray = this.tenNewestQuestions_Answers.map(
-        answer => answer.answer_id
-      );
-      const answerIdStr = answerIdArray.join(";");
-      console.log(`answerIdStr: ${answerIdStr}`);
-      return answerIdStr;
+  mounted() {
+    if (this.tag.length > 0) {
+      this.fetch_ten_newest_staco_items();
+      this.fetch_ten_most_voted_staco_items();
     }
   },
   watch: {
@@ -129,7 +42,7 @@ export default {
         `[*][DEV][StacoSection] Prop (tag) has changed from "${oldTag}" to "${newTag}".`
       );
       this.fetch_ten_newest_staco_items();
-      // this.fetch_TenMostVotedQuestions()
+      this.fetch_ten_most_voted_staco_items();
       console.log(
         `[*][DEV][StacoSection] Fetching methods via axios are called!`
       );
@@ -137,55 +50,71 @@ export default {
   },
   methods: {
     async fetch_ten_newest_staco_items() {
-      console.log("1");
-
       // (A) fetch questions (need the question id for answers & comments)
       const questions = await this.fetch_ten_newest_questions();
-      console.log(questions);
-      console.log("3");
-
       const questionIds = this.get_question_ids(questions);
 
-      // (B) fetch questions' comments (based on question ids)
-      const commentsForAllQuestions = await this.fetch_question_comments(
-        questionIds
-      );
-      //   if (this.tenNewestQuestions_Comments === 0) return
-      console.log(`[4] ${commentsForAllQuestions}`); // "body"
+      // (B) fetch all questions' comments (based on question ids)
+      const questionsComments = await this.fetch_question_comments(questionIds);
 
-      // (C) fetch answers (based on question ids)
+      // (C) fetch all questions' answers (based on question ids)
       const answers = await this.fetch_answers(questionIds);
-      //   if (this.tenNewestQuestions_Answers.length === 0) return
-      console.log(`[5] ${answers}`); // comment_body
-
-      // (D) fetch answers' comments (based on answer ids)
       const answerIds = this.get_answer_ids(answers);
-      const commentsForAllAnswers = await this.fetch_answer_comments(answerIds);
-      //   if (this.tenNewestQuestions_Answers_Comments.length === 0) return
-      console.log(`[6] ${commentsForAllAnswers}`);
 
-      // (E)
+      // (D) fetch all answers' comments (based on answer ids)
+      const answersComments = await this.fetch_answer_comments(answerIds);
+
+      // (E) Derive Staco items via the four information we have
       const stacoItems = this.build_staco_items(
         questions,
-        commentsForAllQuestions,
+        questionsComments,
         answers,
-        commentsForAllAnswers
+        answersComments
       );
       this.tenNewestStacoItems = stacoItems;
-      console.log(stacoItems);
       console.log(this.tenNewestStacoItems);
     },
+    async fetch_ten_most_voted_staco_items() {
+      // (A) fetch questions (as we need the question id for answers & comments)
+      const questions = await this.fetch_ten_most_voted_questions();
+      const questionIds = this.get_question_ids(questions);
 
-    // --- fetch (Newest) ---
+      // (B) fetch all questions' comments (based on question ids)
+      const questionsComments = await this.fetch_question_comments(questionIds);
+
+      // (C) fetch all questions' answers (based on question ids)
+      const answers = await this.fetch_answers(questionIds);
+      const answerIds = this.get_answer_ids(answers);
+
+      // (D) fetch all answers' comments (based on answer ids)
+      const answersComments = await this.fetch_answer_comments(answerIds);
+
+      // (E) Derive Staco items via the four information we have
+      const stacoItems = this.build_staco_items(
+        questions,
+        questionsComments,
+        answers,
+        answersComments
+      );
+      this.tenMostVotedStacoItems = stacoItems;
+      console.log(this.tenMostVotedStacoItems);
+    },
     async fetch_ten_newest_questions() {
-      console.log("2a");
       const params = ApiParamsConstants.get("tenNewestQuestions")(this.tag);
-      console.log(params);
       const { data } = await QuestionsRepository.get(params);
-      console.log("2b");
-      console.log(data.items);
       const questions = data && data.items ? data.items : [];
-      console.log("2c");
+      return questions;
+    },
+    async fetch_ten_most_voted_questions() {
+      const toDate = this.get_to_date();
+      const fromDate = this.get_from_date(toDate);
+      const params = ApiParamsConstants.get("tenMostVotedQuestions")(
+        this.tag,
+        fromDate,
+        toDate
+      );
+      const { data } = await QuestionsRepository.get(params);
+      const questions = data && data.items ? data.items : [];
       return questions;
     },
     async fetch_question_comments(questionIds) {
@@ -194,38 +123,20 @@ export default {
         questionIds,
         params
       );
-      console.log("question comments");
-      console.log(data.items);
       const comments = data && data.items ? data.items : [];
-      console.log(comments);
       return comments;
     },
     async fetch_answers(questionIds) {
       const params = ApiParamsConstants.get("answers")();
       const { data } = await AnswersRepository.get(questionIds, params);
-      console.log("answers");
       const answers = data && data.items ? data.items : [];
-      console.log(answers);
       return answers;
     },
     async fetch_answer_comments(answerIds) {
       const params = ApiParamsConstants.get("comments")();
       const { data } = await AnswersRepository.get_comments(answerIds, params);
-      console.log("answer comments");
       const comments = data && data.items ? data.items : [];
-      // console.log(data.items);
-      console.log(comments);
       return comments;
-    },
-    get_question_ids(questions) {
-      const questionIdArray = questions.map(question => question.question_id);
-      const questionIdStr = questionIdArray.join(";");
-      return questionIdStr;
-    },
-    get_answer_ids(answers) {
-      const answerIdArray = answers.map(answer => answer.answer_id);
-      const answerIdStr = answerIdArray.join(";");
-      return answerIdStr;
     },
     build_staco_items(questions, questionComments, answers, answerComments) {
       const stacoItems = questions.map(question => {
@@ -267,101 +178,21 @@ export default {
 
       return stacoItems;
     },
-
-    // --- fetch (MostVoted) ---
-    async fetch_TenMostVotedQuestions() {
-      const request = this.buildRequestUrl_TenMostVotedQuestions();
-      if (request && request !== "") {
-        let config = {
-          headers: {
-            Accept: "application/json"
-          }
-        };
-        const questions = await axios.get(request, config);
-        // axios.all([axios.get(firstUrl), axios.get(secondUrl)])
-        console.log(questions);
-
-        console.log(
-          `[*][DEV][StacoSection] ${questions.data.items.length} most voted questions during the past week have been fetched!`
-        );
-        this.tenMostVotedQuestions = questions.data.items;
-        console.log(
-          `[*][DEV][StacoSection] These questions have been stored into data()!`
-        );
-      }
-      this.tenNewestQuestions = [];
+    get_question_ids(questions) {
+      const questionIdArray = questions.map(question => question.question_id);
+      const questionIdStr = questionIdArray.join(";");
+      return questionIdStr;
     },
-
-    buildRequestUrl_TenNewestQuestions() {
-      if (this.tag && this.tag !== "") {
-        const domain = "https://api.stackexchange.com";
-        const endpoint = "2.2/questions";
-        const queryString = `pagesize=10&order=desc&sort=creation&tagged=${this.tag}&site=stackoverflow&filter=withbody`;
-        const request = `${domain}/${endpoint}?${queryString}`;
-        console.log(request);
-        return request;
-      }
-      return "";
+    get_answer_ids(answers) {
+      const answerIdArray = answers.map(answer => answer.answer_id);
+      const answerIdStr = answerIdArray.join(";");
+      return answerIdStr;
     },
-    buildRequestUrl_TenNewestQuestions_Comments() {
-      const questionIds = this.tenNewestQuestionIds;
-      if (questionIds && questionIds !== "") {
-        const domain = "https://api.stackexchange.com";
-        const endpoint = `2.2/questions/${questionIds}/comments`;
-        const queryString =
-          "order=desc&sort=creation&site=stackoverflow&filter=withbody";
-        const request = `${domain}/${endpoint}?${queryString}`;
-        return request;
-      }
-      return "";
-    },
-    buildRequestUrl_TenNewestQuestions_Answers() {
-      const questionIds = this.tenNewestQuestionIds;
-      if (questionIds && questionIds !== "") {
-        const domain = "https://api.stackexchange.com";
-        const endpoint = `2.2/answers/${questionIds}`;
-        const queryString =
-          "order=desc&sort=activity&site=stackoverflow&filter=withbody";
-        const request = `${domain}/${endpoint}?${queryString}`;
-        return request;
-      }
-      return "";
-    },
-    buildRequestUrl_TenNewestQuestions_Answers_Comments() {
-      const answerIds = this.tenNewestQuestions_AnswerIds;
-      if (answerIds && answerIds !== "") {
-        const domain = "https://api.stackexchange.com";
-        const endpoint = `2.2/answers/${answerIds}/comments`;
-        const queryString =
-          "order=desc&sort=creation&site=stackoverflow&filter=withbody";
-        const request = `${domain}/${endpoint}?${queryString}`;
-        return request;
-      }
-      return "";
-    },
-    buildRequestUrl_TenMostVotedQuestions() {
-      if (this.tag && this.tag !== "") {
-        const toDate = this.getToDate();
-        const fromDate = this.getFromDate(toDate);
-        console.log(
-          `[*][DEV][StacoSection] fromDate: ${fromDate} | toDate: ${toDate}`
-        );
-        const domain = "https://api.stackexchange.com";
-        const endpoint = "2.2/questions";
-        const queryString = `pagesize=10&fromdate=${fromDate}&todate=${toDate}&order=desc&sort=votes&tagged=${this.tag}&site=stackoverflow&filter=withbody`;
-        const request = `${domain}/${endpoint}?${queryString}`;
-        console.log(
-          `[*][DEV][StacoSection] request url for the ten newest questions are computed: ${request}`
-        );
-        return request;
-      }
-      return "";
-    },
-    getToDate() {
+    get_to_date() {
       const toDate = Math.round(Date.now() / 1000);
       return toDate;
     },
-    getFromDate(toDate) {
+    get_from_date(toDate) {
       const oneWeekInSec = 60 * 60 * 24 * 7;
       const fromDate = toDate - oneWeekInSec;
       return fromDate;

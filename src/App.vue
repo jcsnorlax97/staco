@@ -1,8 +1,13 @@
 <template>
   <div id="id">
     Staco
-    <SearchBar :tag="tag" @submit-search-bar="submit_SearchBar" />
-    <StacoSection :tag="tag" />
+    <SearchBar
+      id="search-bar"
+      :tag="tag"
+      @submit-search-bar="submit_SearchBar"
+    />
+    <StacoSection id="staco-section" v-if="tag && tag.length > 0" :tag="tag" />
+    <p v-else>Please enter a tag and press "Search!" above.</p>
   </div>
 </template>
 
@@ -43,9 +48,5 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
-}
-
-.staco-item {
-  border: 1px solid #dfe3e8;
 }
 </style>
