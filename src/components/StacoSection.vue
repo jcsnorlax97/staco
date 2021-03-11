@@ -12,7 +12,9 @@
 <script>
 import axios from "axios";
 import StacoList from "./StacoList.vue";
+import { ConstantsFactory } from "../constants/ConstantsFactory";
 import { RepositoryFactory } from "../service/RepositoryFactory";
+const ApiParamsConstants = ConstantsFactory.get("apiParams");
 const QuestionsRepository = RepositoryFactory.get("questions");
 const AnswersRepository = RepositoryFactory.get("answers");
 
@@ -126,7 +128,7 @@ export default {
       console.log(
         `[*][DEV][StacoSection] Prop (tag) has changed from "${oldTag}" to "${newTag}".`
       );
-      this.fetch_TenNewestStacoItems();
+      this.fetch_ten_newest_staco_items();
       // this.fetch_TenMostVotedQuestions()
       console.log(
         `[*][DEV][StacoSection] Fetching methods via axios are called!`
@@ -134,76 +136,84 @@ export default {
     }
   },
   methods: {
-    async fetch_TenNewestStacoItems() {
+    async fetch_ten_newest_staco_items() {
       console.log("1");
 
       // (A) fetch questions (need the question id for answers & comments)
-      const questions = await this.fetch_TenNewestQuestions();
+      const questions = await this.fetch_ten_newest_questions();
       console.log(questions);
       console.log("3");
 
       const questionIds = this.get_question_ids(questions);
 
       // (B) fetch questions' comments (based on question ids)
-      const commentsForAllQuestions = await this.fetch_TenNewestQuestions_Comments(
+      const commentsForAllQuestions = await this.fetch_question_comments(
         questionIds
       );
       //   if (this.tenNewestQuestions_Comments === 0) return
       console.log(`[4] ${commentsForAllQuestions}`); // "body"
 
       // (C) fetch answers (based on question ids)
-      const answers = await this.fetch_TenNewestQuestions_Answers(questionIds);
+      const answers = await this.fetch_answers(questionIds);
       //   if (this.tenNewestQuestions_Answers.length === 0) return
       console.log(`[5] ${answers}`); // comment_body
 
       // (D) fetch answers' comments (based on answer ids)
       const answerIds = this.get_answer_ids(answers);
-      const commentsForAllAnswers = await this.fetch_TenNewestQuestions_Answers_Comments(
-        answerIds
-      );
+      const commentsForAllAnswers = await this.fetch_answer_comments(answerIds);
       //   if (this.tenNewestQuestions_Answers_Comments.length === 0) return
       console.log(`[6] ${commentsForAllAnswers}`);
 
       // (E)
-      const stacoItems = this.generate_TenNewestStacos();
+      const stacoItems = this.build_staco_items(
+        questions,
+        commentsForAllQuestions,
+        answers,
+        commentsForAllAnswers
+      );
       this.tenNewestStacoItems = stacoItems;
       console.log(stacoItems);
       console.log(this.tenNewestStacoItems);
     },
 
     // --- fetch (Newest) ---
-    async fetch_TenNewestQuestions() {
+    async fetch_ten_newest_questions() {
       console.log("2a");
-      const params = {
-        pagesize: 10,
-        order: "desc",
-        sort: "creation",
-        tagged: `${this.tag}`,
-        site: "stackoverflow",
-        filter: "withbody"
-      };
+      const params = ApiParamsConstants.get("tenNewestQuestions")(this.tag);
+      console.log(params);
       const { data } = await QuestionsRepository.get(params);
       console.log("2b");
       console.log(data.items);
-      const questions = data.items ?? [];
+      const questions = data && data.items ? data.items : [];
       console.log("2c");
       return questions;
     },
-    async fetch_TenNewestQuestions_Comments(questionIds) {
-      const params = {
-        order: "desc",
-        sort: "creation",
-        site: "stackoverflow",
-        filter: "withbody"
-      };
-
+    async fetch_question_comments(questionIds) {
+      const params = ApiParamsConstants.get("comments")();
       const { data } = await QuestionsRepository.get_comments(
         questionIds,
         params
       );
       console.log("question comments");
       console.log(data.items);
-      const comments = data.items ?? [];
+      const comments = data && data.items ? data.items : [];
+      console.log(comments);
+      return comments;
+    },
+    async fetch_answers(questionIds) {
+      const params = ApiParamsConstants.get("answers")();
+      const { data } = await AnswersRepository.get(questionIds, params);
+      console.log("answers");
+      const answers = data && data.items ? data.items : [];
+      console.log(answers);
+      return answers;
+    },
+    async fetch_answer_comments(answerIds) {
+      const params = ApiParamsConstants.get("comments")();
+      const { data } = await AnswersRepository.get_comments(answerIds, params);
+      console.log("answer comments");
+      const comments = data && data.items ? data.items : [];
+      // console.log(data.items);
       console.log(comments);
       return comments;
     },
@@ -217,56 +227,31 @@ export default {
       const answerIdStr = answerIdArray.join(";");
       return answerIdStr;
     },
-    async fetch_TenNewestQuestions_Answers(questionIds) {
-      const params = {
-        order: "desc",
-        sort: "activity",
-        site: "stackoverflow",
-        filter: "withbody"
-      };
-      const { data } = await AnswersRepository.get(questionIds, params);
-      console.log("answers");
-      const answers = data.items ?? [];
-      console.log(answers);
-      return answers;
-    },
-    async fetch_TenNewestQuestions_Answers_Comments(answerIds) {
-      const params = {
-        order: "desc",
-        sort: "activity",
-        site: "stackoverflow",
-        filter: "withbody"
-      };
-      const { data } = await AnswersRepository.get_comments(answerIds, params);
-      console.log("answer comments");
-      const comments = data.items ?? [];
-      console.log(comments);
-      return comments;
-    },
-    generate_TenNewestStacos() {
-      //   const tenNewestStacos = []
-      const stacoItems = this.tenNewestQuestions.map(question => {
-        const questionComments = this.tenNewestQuestions_Comments.filter(
+    build_staco_items(questions, questionComments, answers, answerComments) {
+      const stacoItems = questions.map(question => {
+        const commentsInOneQuestion = questionComments.filter(
           comment => comment.post_id === question.question_id
         );
-        const questionAnswers = this.tenNewestQuestions_Answers.filter(
+        const answersInOneQuestion = answers.filter(
           answer => answer.question_id === question.question_id
         );
 
         // for each answer, find all matching comments and then create a list of comments
-        const results_AnswerComments = questionAnswers.map(answer => {
-          const questionAnswerComments = this.tenNewestQuestions_Answers_Comments.filter(
-            comment => comment.post_id === answer.answer_id
-          );
-          return questionAnswerComments.map(comment => {
-            return {
-              answer_id: answer.answer_id,
-              comment_id: comment.comment_id,
-              answer_body: answer.body,
-              comment_body: comment.body
-            };
-          });
-        });
+        const answersAndCommentsInOneQuestion = answersInOneQuestion.map(
+          answer => {
+            const commentsInOneAnswer = answerComments.filter(
+              comment => comment.post_id === answer.answer_id
+            );
+            return commentsInOneAnswer.map(comment => {
+              return {
+                answer_id: answer.answer_id,
+                answer_body: answer.body,
+                comment_id: comment.comment_id,
+                comment_body: comment.body
+              };
+            });
+          }
+        );
 
         // for each question, combine question info, question comments, answer info, and answer comments into one object.
         return {
@@ -275,8 +260,8 @@ export default {
           question_creation_date: question.creation_date,
           question_votes: question.score,
           question_body: question.body,
-          question_comments: questionComments,
-          answers: results_AnswerComments
+          question_comments: commentsInOneQuestion,
+          answers: answersAndCommentsInOneQuestion
         };
       });
 
