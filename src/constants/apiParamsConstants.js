@@ -1,9 +1,11 @@
 // apiParamsConstants.js
 
 const params = {
-  tenNewestQuestions: tag => {
+  tenNewestQuestions: (tag, fromDate, toDate) => {
     return {
       pagesize: 10,
+      fromdate: `${fromDate}`,
+      todate: `${toDate}`,
       order: "desc",
       sort: "creation",
       tagged: `${tag}`,

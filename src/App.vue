@@ -1,13 +1,13 @@
 <template>
   <div id="container">
-    Staco
+    Welcome to Staco!
     <SearchBar
       id="search-bar"
       :tag="tag"
       @submit-search-bar="submit_SearchBar"
     />
     <StacoSection id="staco-section" v-if="tag && tag.length > 0" :tag="tag" />
-    <p v-else>Please enter a tag and press "Search!" above.</p>
+    <p v-else>Please enter a non-empty tag and press "Search!" above.</p>
   </div>
 </template>
 
@@ -41,12 +41,20 @@ export default {
 </script>
 
 <style>
+html {
+  background-color: rgba(220, 220, 220, 0.5);
+}
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  padding-top: 60px;
+}
+
+#search-bar {
+  margin-top: 20px;
+  margin-bottom: 35px;
 }
 </style>

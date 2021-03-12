@@ -1,6 +1,8 @@
 <template>
   <div class="staco-list">
-    Staco List
+    <div class="staco-list__staco-list-title">
+      {{ title }}
+    </div>
     <div class="staco-list__staco-item-wrapper">
       <StacoItem
         v-for="staco in stacoItems"
@@ -21,6 +23,10 @@ export default {
     stacoItems: {
       type: Array,
       required: true
+    },
+    title: {
+      type: String,
+      required: false
     }
   }
 };
@@ -33,5 +39,9 @@ export default {
   justify-content: space-between;
   margin: auto;
   padding: 20px;
+}
+
+.staco-list__staco-list-title {
+  font-weight: bold;
 }
 </style>

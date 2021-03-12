@@ -12,15 +12,11 @@ export default {
 
   // get question comments
   get_comments(questionIds, params) {
-    console.log(questionIds);
-    console.log(params);
     return Repository.get(`${resource}/${questionIds}/comments`, { params });
   },
 
   // get answers associated to the input question ids
   get_answers(questionIds, params) {
-    console.log(questionIds);
-    console.log(params);
     return Repository.get(`${resource}/${questionIds}/answers`, { params });
   }
 };

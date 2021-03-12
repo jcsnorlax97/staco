@@ -61,7 +61,6 @@
       </div>
       <br />
       <hr />
-      <br />
       <div class="staco-item__question-answer-section">
         <div
           v-for="(answer, index) in staco.answers"
@@ -96,9 +95,9 @@
               ></div>
               <br v-if="index < answer.comments.length - 1" />
             </div>
-            <hr />
-            <br />
           </div>
+          <br v-if="index < staco.answers.length - 1" />
+          <hr v-if="index < staco.answers.length - 1" />
         </div>
       </div>
     </div>
@@ -152,6 +151,8 @@ export default {
   margin: 10px;
   text-align: left;
   line-height: 1.5em;
+  overflow: scroll;
+  max-height: 300px;
 }
 
 /* --- componant wrapper --- */

@@ -1,12 +1,12 @@
 <template>
   <div class="search-bar">
-    Search Bar
     <form class="search-bar__staco-search-form" @submit.prevent="onSubmit">
       <label for="tag">Tag: </label>
       <input type="text" id="tag" placeholder="e.g. javascript" />
       <button>Search!</button>
     </form>
-    {{ this.tag }}
+    <br />
+    {{ `Tag "${this.tag}" is searched!` }}
   </div>
 </template>
 

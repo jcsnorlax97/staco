@@ -1,18 +1,23 @@
 <template>
   <div class="staco-section">
-    Staco Section Container
     <div class="staco-section__staco-lists-container">
       <div
         id="staco-section__newest-staco-list-wrapper"
         class="staco-section__staco-list-wrapper"
       >
-        <StacoList :stacoItems="tenNewestStacoItems" />
+        <StacoList
+          :stacoItems="tenNewestStacoItems"
+          :title="'Ten Newest Staco List'"
+        />
       </div>
       <div
         id="staco-section__most-voted-staco-list-wrapper"
         class="staco-section__staco-list-wrapper"
       >
-        <StacoList :stacoItems="tenMostVotedStacoItems" />
+        <StacoList
+          :stacoItems="tenMostVotedStacoItems"
+          :title="'Ten Most Voted Staco List'"
+        />
       </div>
     </div>
   </div>
@@ -111,7 +116,13 @@ export default {
       console.log(this.tenMostVotedStacoItems);
     },
     async fetch_ten_newest_questions() {
-      const params = ApiParamsConstants.get("tenNewestQuestions")(this.tag);
+      const toDate = this.get_to_date();
+      const fromDate = this.get_from_date(toDate);
+      const params = ApiParamsConstants.get("tenNewestQuestions")(
+        this.tag,
+        fromDate,
+        toDate
+      );
       const { data } = await QuestionsRepository.get(params);
       const questions = data && data.items ? data.items : [];
       return questions;
@@ -236,11 +247,11 @@ export default {
 
 #staco-section__newest-staco-list-wrapper {
   max-width: 45%;
-  background-color: lightblue;
+  background-color: rgba(225, 200, 255, 0.4);
 }
 
 #staco-section__most-voted-staco-list-wrapper {
   max-width: 45%;
-  background-color: #dfe3e8;
+  background-color: rgba(150, 197, 255, 0.4);
 }
 </style>
