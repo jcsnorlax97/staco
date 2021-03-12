@@ -20,6 +20,25 @@
         />
       </div>
     </div>
+    <div class="staco-section__total-fetching-time-wrapper">
+      <div class="staco-section__total-fetching-time-label">
+        Total fetching time among 8 API calls:
+      </div>
+      <div class="staco-section__total-fetching-time">
+        {{
+          `${totalAPIFetchingTime} ms = ${totalAPIFetchingTime / 1000} seconds`
+        }}
+      </div>
+      <div class="staco-section__average-fetching-time-label">
+        Average fetching time among 8 API calls:
+      </div>
+      <div class="staco-section__total-fetching-time">
+        {{
+          `${averageAPIFetchingTime} ms = ${averageAPIFetchingTime /
+            1000} seconds`
+        }}
+      </div>
+    </div>
   </div>
 </template>
 
@@ -43,13 +62,31 @@ export default {
   data() {
     return {
       tenNewestStacoItems: [],
-      tenMostVotedStacoItems: []
+      tenMostVotedStacoItems: [],
+      durationToFetchNewestStacoItems: 0,
+      durationToFetchMostVotedStacoItems: 0
     };
   },
   mounted() {
     if (this.tag.length > 0) {
       this.fetch_ten_newest_staco_items();
       this.fetch_ten_most_voted_staco_items();
+    }
+  },
+  computed: {
+    totalAPIFetchingTime() {
+      return (
+        this.durationToFetchNewestStacoItems +
+        this.durationToFetchMostVotedStacoItems
+      );
+    },
+    averageAPIFetchingTime() {
+      const apiCount = 8;
+      return (
+        (this.durationToFetchNewestStacoItems +
+          this.durationToFetchMostVotedStacoItems) /
+        apiCount
+      );
     }
   },
   watch: {
@@ -65,20 +102,33 @@ export default {
     }
   },
   methods: {
+    // TODO: brainstorm a way to refactor fetch_ten_newest_staco_items() & fetch_ten_most_voted_staco_items() into one
     async fetch_ten_newest_staco_items() {
+      let duration = 0.0;
+
       // (A) fetch questions (need the question id for answers & comments)
-      const questions = await this.fetch_ten_newest_questions();
+      const questionsRes = await this.fetch_ten_newest_questions();
+      const questions = questionsRes.questions;
+      duration += questionsRes.duration;
       const questionIds = this.get_question_ids(questions);
 
       // (B) fetch all questions' comments (based on question ids)
-      const questionsComments = await this.fetch_question_comments(questionIds);
+      const questionsCommentsRes = await this.fetch_question_comments(
+        questionIds
+      );
+      const questionsComments = questionsCommentsRes.comments;
+      duration += questionsCommentsRes.duration;
 
       // (C) fetch all questions' answers (based on question ids)
-      const answers = await this.fetch_answers(questionIds);
+      const answersRes = await this.fetch_answers(questionIds);
+      const answers = answersRes.answers;
+      duration += answersRes.duration;
       const answerIds = this.get_answer_ids(answers);
 
       // (D) fetch all answers' comments (based on answer ids)
-      const answersComments = await this.fetch_answer_comments(answerIds);
+      const answersCommentsRes = await this.fetch_answer_comments(answerIds);
+      const answersComments = answersCommentsRes.comments;
+      duration += answersCommentsRes.duration;
 
       // (E) Derive Staco items via the four information we have
       const stacoItems = this.build_staco_items(
@@ -88,22 +138,38 @@ export default {
         answersComments
       );
       this.tenNewestStacoItems = stacoItems;
+      this.durationToFetchNewestStacoItems = duration;
       console.log(this.tenNewestStacoItems);
+      console.log(
+        `Total duration to fetch ten newest staco items (Four API calls in total): ${duration}`
+      );
     },
     async fetch_ten_most_voted_staco_items() {
+      let duration = 0.0;
+
       // (A) fetch questions (as we need the question id for answers & comments)
-      const questions = await this.fetch_ten_most_voted_questions();
+      const questionsRes = await this.fetch_ten_most_voted_questions();
+      const questions = questionsRes.questions;
+      duration += questionsRes.duration;
       const questionIds = this.get_question_ids(questions);
 
       // (B) fetch all questions' comments (based on question ids)
-      const questionsComments = await this.fetch_question_comments(questionIds);
+      const questionsCommentsRes = await this.fetch_question_comments(
+        questionIds
+      );
+      const questionsComments = questionsCommentsRes.comments;
+      duration += questionsCommentsRes.duration;
 
       // (C) fetch all questions' answers (based on question ids)
-      const answers = await this.fetch_answers(questionIds);
+      const answersRes = await this.fetch_answers(questionIds);
+      const answers = answersRes.answers;
+      duration += answersRes.duration;
       const answerIds = this.get_answer_ids(answers);
 
       // (D) fetch all answers' comments (based on answer ids)
-      const answersComments = await this.fetch_answer_comments(answerIds);
+      const answersCommentsRes = await this.fetch_answer_comments(answerIds);
+      const answersComments = answersCommentsRes.comments;
+      duration += answersCommentsRes.duration;
 
       // (E) Derive Staco items via the four information we have
       const stacoItems = this.build_staco_items(
@@ -113,7 +179,11 @@ export default {
         answersComments
       );
       this.tenMostVotedStacoItems = stacoItems;
+      this.durationToFetchMostVotedStacoItems = duration;
       console.log(this.tenMostVotedStacoItems);
+      console.log(
+        `Total duration to fetch ten most voted staco items (Four API calls in total): ${duration}`
+      );
     },
     async fetch_ten_newest_questions() {
       const toDate = this.get_to_date();
@@ -123,9 +193,9 @@ export default {
         fromDate,
         toDate
       );
-      const { data } = await QuestionsRepository.get(params);
+      const { data, duration } = await QuestionsRepository.get(params);
       const questions = data && data.items ? data.items : [];
-      return questions;
+      return { questions, duration };
     },
     async fetch_ten_most_voted_questions() {
       const toDate = this.get_to_date();
@@ -135,33 +205,36 @@ export default {
         fromDate,
         toDate
       );
-      const { data } = await QuestionsRepository.get(params);
+      const { data, duration } = await QuestionsRepository.get(params);
       const questions = data && data.items ? data.items : [];
-      return questions;
+      return { questions, duration };
     },
     async fetch_question_comments(questionIds) {
       const params = ApiParamsConstants.get("comments")();
-      const { data } = await QuestionsRepository.get_comments(
+      const { data, duration } = await QuestionsRepository.get_comments(
         questionIds,
         params
       );
       const comments = data && data.items ? data.items : [];
-      return comments;
+      return { comments, duration };
     },
     async fetch_answers(questionIds) {
       const params = ApiParamsConstants.get("answers")();
-      const { data } = await QuestionsRepository.get_answers(
+      const { data, duration } = await QuestionsRepository.get_answers(
         questionIds,
         params
       );
       const answers = data && data.items ? data.items : [];
-      return answers;
+      return { answers, duration };
     },
     async fetch_answer_comments(answerIds) {
       const params = ApiParamsConstants.get("comments")();
-      const { data } = await AnswersRepository.get_comments(answerIds, params);
+      const { data, duration } = await AnswersRepository.get_comments(
+        answerIds,
+        params
+      );
       const comments = data && data.items ? data.items : [];
-      return comments;
+      return { comments, duration };
     },
     build_staco_items(questions, questionComments, answers, answerComments) {
       const stacoItems = questions.map(question => {
