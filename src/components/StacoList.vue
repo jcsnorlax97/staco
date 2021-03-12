@@ -1,13 +1,13 @@
 <template>
   <div class="staco-list">
     Staco List
-    <ul>
+    <div class="staco-list__staco-item-wrapper">
       <StacoItem
         v-for="staco in stacoItems"
         :key="staco.question_id"
         :staco="staco"
       />
-    </ul>
+    </div>
   </div>
 </template>
 
@@ -25,3 +25,13 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.staco-list__staco-item-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: auto;
+  padding: 20px;
+}
+</style>

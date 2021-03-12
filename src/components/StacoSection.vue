@@ -1,9 +1,20 @@
 <template>
   <div class="staco-section">
     Staco Section Container
-    <StacoList :stacoItems="tenNewestStacoItems" />
-    <StacoList :stacoItems="tenMostVotedStacoItems" />
-    {{ tenNewestQuestionIds }}
+    <div class="staco-section__staco-lists-container">
+      <div
+        id="staco-section__newest-staco-list-wrapper"
+        class="staco-section__staco-list-wrapper"
+      >
+        <StacoList :stacoItems="tenNewestStacoItems" />
+      </div>
+      <div
+        id="staco-section__most-voted-staco-list-wrapper"
+        class="staco-section__staco-list-wrapper"
+      >
+        <StacoList :stacoItems="tenMostVotedStacoItems" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -128,7 +139,10 @@ export default {
     },
     async fetch_answers(questionIds) {
       const params = ApiParamsConstants.get("answers")();
-      const { data } = await AnswersRepository.get(questionIds, params);
+      const { data } = await QuestionsRepository.get_answers(
+        questionIds,
+        params
+      );
       const answers = data && data.items ? data.items : [];
       return answers;
     },
@@ -153,14 +167,20 @@ export default {
             const commentsInOneAnswer = answerComments.filter(
               comment => comment.post_id === answer.answer_id
             );
-            return commentsInOneAnswer.map(comment => {
-              return {
-                answer_id: answer.answer_id,
-                answer_body: answer.body,
-                comment_id: comment.comment_id,
-                comment_body: comment.body
-              };
-            });
+            const simplifiedCommentsInOneAnswer = commentsInOneAnswer.map(
+              comment => {
+                return {
+                  comment_id: comment.comment_id,
+                  comment_body: comment.body
+                };
+              }
+            );
+            const simplifiedAnswersInOneQuestion = {
+              answer_id: answer.answer_id,
+              answer_body: answer.body,
+              comments: simplifiedCommentsInOneAnswer
+            };
+            return simplifiedAnswersInOneQuestion;
           }
         );
 
@@ -200,3 +220,27 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.staco-section__staco-lists-container {
+  display: flex;
+  flex-flow: row wrap; /* flex direction + flex wrap */
+  justify-content: center; /* layout position in the main axis */
+}
+
+.staco-section__staco-list-wrapper {
+  margin: 5px;
+  padding: 10px;
+  justify-content: center;
+}
+
+#staco-section__newest-staco-list-wrapper {
+  max-width: 45%;
+  background-color: lightblue;
+}
+
+#staco-section__most-voted-staco-list-wrapper {
+  max-width: 45%;
+  background-color: #dfe3e8;
+}
+</style>

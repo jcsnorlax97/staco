@@ -1,5 +1,5 @@
 <template>
-  <div id="id">
+  <div id="container">
     Staco
     <SearchBar
       id="search-bar"
