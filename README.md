@@ -10,20 +10,20 @@ Staco is a dashboard allowing users to search for the newest & the most voted qu
 ### Docker
 
 - Dockerize this project into Docker Hub:
-  1. Login: `docker login`
-  2. Build: `docker build -t <your_hub_username>/<image_name> .`
-  3. Push: `docker push <your_hub_username>/<image_name>`
+  1. **Login**: `docker login`
+  2. **Build**: `docker build -t <your_hub_username>/<image_name> .`
+  3. **Push**: `docker push <your_hub_username>/<image_name>`
 
 - Run this project via existing Docker image from Docker Hub:
-  1. Pull: `docker pull jcsnorlax97/staco`
-  2. Run: `docker run -it -p 8080:80 --rm --name staco jcsnorlax97/staco`
+  1. **Pull**: `docker pull jcsnorlax97/staco`
+  2. **Run**: `docker run -it -p 8080:80 --rm --name staco jcsnorlax97/staco`
 
 ### Local Development
 
 - Run locally
-  1. Clone: `git clone <repo_git>`
-  2. Installation: `npm install` 
-  3. Run: `npm run server`
+  1. **Clone**: `git clone <repo_git>`
+  2. **Installation**: `npm install` 
+  3. **Run**: `npm run server`
 
 - Note: Vue GUI via `vue ui` can do the same job as well.
 
