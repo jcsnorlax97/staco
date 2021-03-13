@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  staco-vue-ui: 
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    container_name: staco-vue-ui
+    volumes:
+      - .:/usr/src/app # current directory --> /usr/src/app (the location the volume is mounted into)
+      - /usr/src/app/node_modules
