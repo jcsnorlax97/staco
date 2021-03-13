@@ -1,6 +1,6 @@
 # staco
 
-Staco is a dashboard allowing users to search for the newest & the most voted questions based on tag names with use of Stackoverflow API. When users are attracted by any of the question title displayed, they can click the "staco" and view more details about it. The details include the contents and the comments of the question, the answers, and all comments associated to each answer.
+Staco is a dashboard allowing users to search for the newest & the most voted questions during the past week based on tag names. If users get interested in any of the question title displayed, they can see more details of it by simply clicking the question prompt. Then the prompt will expand and display the question body, the question comments, the answers, and all comments associated to each answer.
 
 ![demo.png](assets/demo.png)
 ### Technologies
